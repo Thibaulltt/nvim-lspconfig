@@ -89,6 +89,24 @@ local function buf_clean_artifacts(bufnr)
   end
 end
 
+local function buf_cancel_build(bufnr)
+  bufnr = util.validate_bufnr(bufnr)
+  local texlab_client = util.get_active_client_by_name(bufnr, 'texlab')
+  local params = { command = 'texlab.cancelBuild', }
+  if texlab_client then
+    texlab_client.request('workspace/executeCommand', params, function(err, result)
+      if err then
+        error(tostring(err))
+      else
+        vim.notify('Cancelled build command.') 
+      end
+    end, bufnr)
+  else
+    vim.notify 'Could not find the texlab executable.'
+  end
+
+end
+
 -- bufnr isn't actually required here, but we need a valid buffer in order to
 -- be able to find the client for buf_request.
 -- TODO find a client by looking through buffers for a valid client?
@@ -160,6 +178,12 @@ return {
         buf_clean_artifacts(0)
       end,
       description = 'Clean all artifacts generated from the build.',
+    },
+    TexlabCancelBuild = {
+      function()
+        buf_cancel_build(0)
+      end,
+      description = 'Cancel the build commands currently running.',
     },
   },
   docs = {
