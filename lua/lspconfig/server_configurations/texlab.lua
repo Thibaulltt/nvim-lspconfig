@@ -54,6 +54,41 @@ local function buf_search(bufnr)
   end
 end
 
+local function on_clean_error(err, result)
+  if err then
+    error(tostring(err))
+  end
+  vim.notify('Cleaned build files.')
+end
+
+local function buf_clean_auxiliary(bufnr)
+  bufnr = util.validate_bufnr(bufnr)
+  local texlab_client = util.get_active_client_by_name(bufnr, 'texlab')
+  local params = {
+    command='texlab.cleanAuxiliary',
+    arguments = { uri = vim.uri_from_bufnr(bufnr) },
+  }
+  if texlab_client then
+    texlab_client.request('workspace/executeCommand', params, on_clean_error, bufnr)
+  else
+    vim.notify 'Could not find the texlab executable.'
+  end
+end
+
+local function buf_clean_artifacts(bufnr)
+  bufnr = util.validate_bufnr(bufnr)
+  local texlab_client = util.get_active_client_by_name(bufnr, 'texlab')
+  local params = {
+    command='texlab.cleanArtifacts',
+    arguments = { uri = vim.uri_from_bufnr(bufnr) },
+  }
+  if texlab_client then
+    texlab_client.request('workspace/executeCommand', params, on_clean_error, bufnr)
+  else
+    vim.notify 'Could not find the texlab executable.'
+  end
+end
+
 -- bufnr isn't actually required here, but we need a valid buffer in order to
 -- be able to find the client for buf_request.
 -- TODO find a client by looking through buffers for a valid client?
@@ -113,6 +148,18 @@ return {
         buf_search(0)
       end,
       description = 'Forward search from current position',
+    },
+    TexlabCleanAuxiliary = {
+      function()
+        buf_clean_auxiliary(0)
+      end,
+      description = 'Clean the auxiliary files generated from the build.',
+    },
+    TexlabCleanArtifacts = {
+      function()
+        buf_clean_artifacts(0)
+      end,
+      description = 'Clean all artifacts generated from the build.',
     },
   },
   docs = {
